@@ -1,6 +1,7 @@
 (ns ns-graph.api
   (:require
     [clojure.java.io :as io]
+    [clojure.pprint :as pprint]
     [ns-graph.impl :as impl]))
 
 (defn resolve-opts
@@ -24,3 +25,11 @@
         (impl/save! opts))
     (prn {:status :success :options opts
           :file (.getAbsolutePath (io/file (:f opts)))})))
+
+(defn stats
+  [args]
+  (-> args
+      impl/resolve-opts
+      impl/graph
+      impl/stats
+      pprint/pprint))

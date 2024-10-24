@@ -28,9 +28,6 @@
   (assert (#{'fn} (first form)))
   (eval form))
 
-(defn always
-  [_]
-  true)
 
 (defn resolve-opts
   [{:keys [source-paths f fmt prefix exclude]}]
@@ -87,3 +84,18 @@
 (defn save!
   [dotted-graph {:keys [f fmt]}]
   (dot-jvm/save! dotted-graph f {:format fmt}))
+
+(defn stats
+  [graph]
+  (->>
+    (reduce-kv
+      (fn [acc dependant dependencies]
+        (as-> acc acc
+              (assoc-in acc [dependant :dependencies] (count dependencies))
+              (reduce (fn [acc dependency] (update-in acc [dependency :dependants] (fnil inc 0)))
+                      acc
+                      dependencies)))
+      {}
+      graph)
+    (sort-by (comp (juxt :dependants :dependencies) val))
+    reverse))
