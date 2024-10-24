@@ -1,0 +1,6 @@
+{:deps {org.clojure/tools.namespace {:mvn/version "1.4.4"}
+        org.clojure/tools.deps {:mvn/version "0.16.1264"}
+        dorothy/dorothy {:mvn/version "0.0.7"}
+        org.slf4j/slf4j-nop {:mvn/version "1.7.32"}}
+ :paths ["src"]
+ :tools/usage {:ns-default ns-graph.api}}
