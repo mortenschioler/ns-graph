@@ -1,10 +1,11 @@
 (ns ns-graph.impl
-  (:require [clojure.edn :as edn]
-            [clojure.java.io :as io]
-            [clojure.tools.namespace.find :as ns-find]
-            [clojure.tools.namespace.parse :as ns-parse]
-            [dorothy.core :as dot]
-            [dorothy.jvm :as dot-jvm]))
+  (:require
+    [clojure.java.io :as io]
+    [clojure.string :as str]
+    [clojure.tools.namespace.find :as ns-find]
+    [clojure.tools.namespace.parse :as ns-parse]
+    [dorothy.core :as dot]
+    [dorothy.jvm :as dot-jvm]))
 
 (defn edges
   [[dependant dependencies]]
@@ -14,27 +15,60 @@
 
 (defn file-ending
   [^String f]
-  (when-let [start (.lastIndexOf f (int \. ))]
+  (when-let [start (.lastIndexOf f (int \.))]
     (subs f (inc start))))
 
+(defn prefix?-fn
+  [prefix]
+  (fn [s] (str/starts-with? s prefix)))
+
+(defn compile-fn
+  [form]
+  (assert (list? form))
+  (assert (#{'fn} (first form)))
+  (eval form))
+
+(defn always
+  [_]
+  true)
+
 (defn resolve-opts
-  [{:keys [source-paths f fmt]}]
+  [{:keys [source-paths f fmt prefix exclude]}]
   (let [fmt (keyword (or fmt
                          (and f (file-ending f))
                          :pdf))
         f (or f (format "ns-graph.%s" (name fmt)))
         source-paths (or source-paths ["src"])]
-    {:fmt fmt
-     :f f
-     :source-paths source-paths}))
+    (cond->
+      {:fmt fmt
+       :f f
+       :source-paths source-paths}
+      prefix (assoc :prefix prefix)
+      exclude (assoc :exclude exclude)
+      (or prefix exclude)
+      (assoc :filter-compiled (apply every-pred
+                                     (remove nil? [(some-> prefix prefix?-fn)
+                                                   (some-> exclude complement)]))))))
+
+(defn filter-graph
+  [opts graph]
+  (if-let [pred (:filter-compiled opts)]
+    (reduce
+      (fn [acc [k v]]
+        (if-not (pred k)
+          acc
+          (assoc acc k (into #{} (filter pred) v))))
+      {}
+      graph)
+    (into {} graph)))
 
 (defn graph
-  [{:keys [source-paths]}]
+  [{:keys [source-paths] :as opts}]
   (->> source-paths
        (map io/file)
        ns-find/find-ns-decls
        (map (juxt ns-parse/name-from-ns-decl ns-parse/deps-from-ns-decl))
-       (into {})))
+       (filter-graph opts)))
 
 (defn dot-graph
   [graph]
