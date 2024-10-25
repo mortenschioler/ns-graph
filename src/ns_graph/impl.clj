@@ -30,7 +30,7 @@
 
 
 (defn resolve-opts
-  [{:keys [source-paths f fmt prefix exclude]}]
+  [{:keys [source-paths f fmt prefix not-prefix exclude]}]
   (let [fmt (keyword (or fmt
                          (and f (file-ending f))
                          :pdf))
@@ -45,6 +45,7 @@
       (or prefix exclude)
       (assoc :filter-compiled (apply every-pred
                                      (remove nil? [(some-> prefix prefix?-fn)
+                                                   (some-> not-prefix prefix?-fn complement)
                                                    (some-> exclude complement)]))))))
 
 (defn filter-graph
