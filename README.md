@@ -7,7 +7,7 @@ Very rough around the edges, but this tool gets the job done quote nicely. Since
 ### Installation
 
 ```sh
-clj -Ttools install io.github.mortenschioler/ns-graph '{:git/sha "c341d341a4b0b64e1644084ea447a0c8a6acf9b0"}' :as ns-graph
+clj -Ttools install io.github.mortenschioler/ns-graph '{:git/sha "8aab5ea34f38b91b96fcfacfe95bf8e2d76d62c0"}' :as ns-graph
 ```
 
 ### Usage
